@@ -151,21 +151,17 @@ var HTTPDigest = (function () {
     }, {
         key: '_parseDigestResponse',
         value: function _parseDigestResponse(digestHeader) {
-            var prefix = 'Digest ';
-            var challenge = digestHeader.substr(digestHeader.indexOf(prefix) + prefix.length);
-            var parts = challenge.split(',');
-            var length = parts.length;
-            var params = {};
-
-            for (var i = 0; i < length; i++) {
-                var paramSplitted = this._splitParams(parts[i]);
-
-                if (paramSplitted.length > 2) {
-                    params[paramSplitted[1]] = paramSplitted[2].replace(/\"/g, '');
+            let challenges = [];
+            digestHeader.split(',').forEach(p => {
+                let key = p.split('=')[0].trim();
+                let val = p.split('=')[1].replace(/"/g, '');
+                if (key.indexOf('realm') !== -1) {
+                    challenges.push({realm: val});
+                } else {
+                    challenges[challenges.length - 1][key] = val;
                 }
-            }
-
-            return params;
+            });
+            return challenges.find(a => a.algorithm === 'MD5');
         }
     }, {
         key: '_splitParams',
